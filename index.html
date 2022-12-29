@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> Solar System </title>
+    <style> 
+      body { margin : 0 ;}
+      canvas {width: 100% ; height: 100%}
+    </style>
+  </head>
+  <body>
+    <script type="module" >
+      
+    //code here
+      import * as THREE from './js/three.module.js';
+      var keyboard ={} ;
+      const speed =1;
+      
+      // in the begining we just have to type a basic threejs scene 
+      //camera and render 
+
+      let scene = new THREE.Scene();
+      const texture = new THREE.TextureLoader().load( "textures/planetgalaxybackround.jpg" );
+      scene.background = texture ; 
+
+      //CAMERA
+      let camera = new THREE.PerspectiveCamera(
+        75, //field of view in vetical degrees
+        innerWidth/innerHeight,//aspect of ratio: ratio of image widthand height
+        0.1,//near:distance from camera object starts to appear
+        1000 // far :distance from camera objects stops appearing
+        );
+      scene.add(camera) ;
+      camera.position.z =300 ;
+      //camera.position.y =200 ;
+      //camera.position.x =-100 ;
+
+      //RENDER      
+      let renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth,window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      //one of my light is a point light it has placed at the oorigin
+      // to act as a sun light
+      let ambient =new THREE.AmbientLight(0x222222);//no shadow
+      scene.add(ambient)
+       //add a pint light
+      let light = new THREE.PointLight(0xffffff);
+      //light.position.set(-3 , 4 , -4);
+      light.castShadow =true; 
+      //set the maxim draw distance for the shadow to something reasonable 
+      light.shadow.camera.near =0.5 ;
+      light.shadow.camera.near = 1 ;
+      
+      scene.add(light);
+
+      //and we have orbit control
+      //
+
+      // and now we start to creat our mini solar System 
+      //make sure first to creat a texture laoder so we can load all 
+      //our image texture
+      // So the backrown image is just a reguler high resolution image 
+      //6000px by 3000px
+      let textureLoader = new THREE.TextureLoader()
+
+      
+      //********************************************
+      //Creat Solar system
+      //********************************************
+
+      //for the sun we are using this texture ...
+      let textureSun =new THREE.TextureLoader().load("textures/sun/sunmap.jpg");
+      textureSun.wrapS =THREE.ReapeatWrapping ;
+      textureSun.wrapT =THREE.ReapeatWrapping ;
+
+      let geometrySun = new THREE.SphereGeometry( 
+        109, //redius
+        400, //width segment
+        200 //height
+        );
+
+     let materialSun = new THREE.MeshBasicMaterial({ 
+       color: 0xffffff,
+        map : textureSun
+       
+} );
+
+      let Sun = new THREE.Mesh( geometrySun,materialSun );
+
+      scene.add(Sun);
+
+      //EARTH SYTEM will contain EARTH,ATMOSPHERE,AXIS LINE
+      // wich is a line that runs through the north ans south poles
+      //,MOON 
+      let earthsys =new THREE.Group();
+      const r=25; // radius of earth,r+1 is radius of atmosphere
+      const s=50; //with segments , height segments sphere grometry
+      const tilt = 0.41 // earth+atmosphere+axix s line tilt in radians 
+
+      // so for the earth we have tree texture images  :
+      // a bumpmap  where we are going to be able to show height
+      // acolor map which show colors and speculer map which 
+      //show shininess or reflectivity and load them to three object here 
+      const earthC =textureLoader.load("textures/earth/earthmap1k.jpg")
+      const earthB =textureLoader.load("textures/earth/bumpmap.png")
+      const earthS =textureLoader.load("textures/earth/specmap.png")
+      let geometryEarth = new THREE.SphereGeometry( 
+        r, //redius
+        s, //width segment
+        s //height
+        );
+      let materialEarth = new THREE.MeshPhongMaterial({ 
+        map:earthC, //colormap
+        bumpMap:earthB ,// affects lighting to give depth
+        bumpScale:0.5,//how bumpy bump map will loop
+        specularMap  :earthC, //how shiny material looks
+        shininess:0.5,//shininess/reflectibity of speculer highlight
+        } );
+      let earth = new THREE.Mesh( geometryEarth,materialEarth );
+      earth.rotation.z=tilt ;// 
+
+      earthsys.add(earth);//add earth to earth system group 
+
+      //And now we will add earth atmosphere , it will be a sphere larger thatn the earth
+      //it going to be a semi-transparent  that going to show a cloud orbiting arrowd the earth 
+      //the earth texture that show the clolud look like this 
+      //earth cloud 
+      const geometryCloud =new THREE.SphereGeometry(r+1,s,s);
+      const materialCloud =new THREE.MeshPhongMaterial({
+        map :textureLoader.load("textures/earth/cloudmap.png"),
+        transparent : true ,
+        opacity:0.5
+      });
+
+      let cloud =new THREE.Mesh(geometryCloud,materialCloud);
+      cloud.rotation.z =tilt;
+      //add it to the earth system group                 
+      earthsys.add(cloud);
+
+      ////////: and now the earth axis line (north and south poles)
+      // we are going to creat an array of two points, EAch point is an end point 
+      const axisP =[ // creat endPoints
+      new THREE.Vector3(0,35,0),
+      new THREE.Vector3(0,-35,0),
+
+      ];
+      //and creating a new buffer geometry using setFromPoints method from the two point created 
+      const geometryAxis=new THREE.BufferGeometry().setFromPoints(axisP);//creat a geometry 
+      const materialAxis = new THREE.LineBasicMaterial({
+        color:0x330000,
+        transparent:true,
+        opacity:0.5
+      });
+      let axis = new THREE.Line (
+        geometryAxis,
+        materialAxis
+      )
+      axis.rotation.z=tilt ; // rotatit as eearth and the atmosphere
+      earthsys.add(axis);//add axis to the earth sys
+
+      //Now for the moon this is what the bump map looks like and the color map for the moon 
+      const geometryMoon = new THREE.SphereGeometry(5,40,20);
+      const materialMoon =new THREE.MeshStandardMaterial({
+        map :textureLoader.load("../textures/moon/moonmap1k.jpg"),
+        bumpMap :textureLoader.load("../textures/moon/moonbump1k.jpg"),
+        bumpScale:0.5,
+      });
+
+      let moon = new THREE.Mesh(geometryMoon,materialMoon);
+      moon.position.set(40,0,0); //as we can see evrything is being set at the origin 
+      // the only thing that we going to move in the earth system is the moon 
+      // cause we want to set later the moon orbit 
+      earthsys.add(moon);
+
+      scene.add(earthsys);
+
+      //Create shadow 
+
+      // now we are going to set earth orbit 
+      // as we know the earth orbit is elliptic
+      // so we're going to creat a new curve 
+      const curve =new THREE.EllipseCurve(
+        0,0, //center x,y
+        250,300,// radius x,y
+        0,2*Math.PI //starts, ens angles (0,360 degrees)
+      );
+
+      // and were going to have 200 pieces of that curve to get array of that point 
+      const  points = curve.getSpacedPoints(200) ;
+      const geometryCurve=new THREE.BufferGeometry().setFromPoints(points);//creat a geometry 
+      const materialCurve = new THREE.LineBasicMaterial({
+        color:0x333333,
+        transparent:true,
+        opacity:0.5
+      });
+
+      //set the orbit of the earth around the sun 
+      const orbit =new THREE.Line( geometryCurve,materialCurve);
+      orbit.rotateX(-Math.PI/2); //rotate -90 deg to orbit around y axis
+
+      scene.add(orbit);
+
+     // now we just have to move the earth system on that path
+
+     //for the animat eloop we are going to create some constant 
+      const loopTime =1; // 1year for each orbit around the sun 
+      const earthSpeed =0.00001 ;
+      const moonOrbitRadius =55 ; // disatance between the midlle of the moon and the middle of the earth 
+
+      const moonSpeed =80 ;
+
+      //the animate function does three things 
+      //move the earth around tha sun 
+      //move the moon around the earth 
+      //rotation the earth system around it's axis 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+      function render(){
+
+        //move earth around the sun 
+        //the amout of time the earth going around the sun 
+        // performance.now : is time in ms 
+        const time = earthSpeed *performance.now(); //time in ms*value to slow orbit
+        const t =(time%loopTime)/loopTime; //range from 0-1
+        
+        let p =curve.getPoint(t);// from t we can get hte position of the earth in orbith in that curve path 
+        // p is a 2D vector 
+        //console.log(p,t);
+
+        earthsys.position.x=p.x; //set position of earth system at point of curve 
+        earthsys.position.z=p.y;
+
+
+        ////////////////////////////////////:
+        //move the moon around the earth 
+        // the moon orbit around the earth sytem position 
+        moon.position.x = -Math.cos(time*moonSpeed)*moonOrbitRadius ;
+        moon.position.z = -Math.sin(time*moonSpeed)*moonOrbitRadius ;
+
+        //rotate earth and sun on axis 
+        Sun.rotation.y += 0.0008 ;
+        earth.rotation.y += 0.0015 ;
+        cloud.rotation.y += 0.0025 ;
+        moon.rotation.y += 0.0001 ;
+
+
+
+
+
+
+        // Keyboard movement inputs
+	    if(keyboard[81]){ // Q key
+          camera.position.x -= Math.sin(camera.rotation.y) * speed;
+          camera.position.z -= -Math.cos(camera.rotation.y) * speed
+        }
+        if(keyboard[83]){ // S key
+		  camera.position.x += Math.sin(camera.rotation.y) * speed;
+		  camera.position.z += -Math.cos(camera.rotation.y) * speed;
+	    }
+	    if(keyboard[90]){ // A key
+		// Redirect motion by 90 degrees
+		  camera.position.x += Math.sin(camera.rotation.y + Math.PI/2) * speed;
+		  camera.position.z += -Math.cos(camera.rotation.y + Math.PI/2) * speed;
+	    }
+	    if(keyboard[65]){ // z key
+		  camera.position.x += Math.sin(camera.rotation.y - Math.PI/2) *speed;
+		  camera.position.z += -Math.cos(camera.rotation.y - Math.PI/2) * speed;
+	    }
+
+        if(keyboard[37]) {//left arrow key 
+          camera.rotation.y += Math.PI * 0.001 ;
+        
+        }
+        if(keyboard[39]) {//right arrow key 
+          camera.rotation.y -= Math.PI * 0.001 ;
+        }
+        
+        renderer.render(scene,camera);
+        
+      }
+      // add event listener
+      function keyDown(event){
+        keyboard[event.keyCode] =true ;
+      }
+      function keyUp(event){
+        keyboard[event.keyCode] =false;  
+      }
+      
+      window.addEventListener('keydown',keyDown) ;
+      window.addEventListener('keyup',keyUp) ;
+      
+      // add Interaction 
+      function resize(){
+        console.log(
+          "New_window_size:_" ,window.innerWidth ,Window.innerHeight);
+      }
+      window.onresize =resize ;
+      
+      
+      renderer.setAnimationLoop(render);
+      
+
+    </script>
+  </body>
+</html>
+    
+  
+  
