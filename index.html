@@ -39,28 +39,25 @@
       renderer.setSize(window.innerWidth,window.innerHeight);
       document.body.appendChild(renderer.domElement);
       
-      //one of my light is a point light it has placed at the oorigin
+      //one of my light is a point light it has placed at the origin
       // to act as a sun light
       let ambient =new THREE.AmbientLight(0x222222);//no shadow
       scene.add(ambient)
-       //add a pint light
+       //add a point light
       let light = new THREE.PointLight(0xffffff);
       //light.position.set(-3 , 4 , -4);
       light.castShadow =true; 
-      //set the maxim draw distance for the shadow to something reasonable 
+      //set the maximum draw distance for the shadow to something reasonable 
       light.shadow.camera.near =0.5 ;
       light.shadow.camera.near = 1 ;
       
       scene.add(light);
 
-      //and we have orbit control
-      //
-
+ 
       // and now we start to creat our mini solar System 
       //make sure first to creat a texture laoder so we can load all 
       //our image texture
-      // So the backrown image is just a reguler high resolution image 
-      //6000px by 3000px
+
       let textureLoader = new THREE.TextureLoader()
 
       
@@ -68,7 +65,7 @@
       //Creat Solar system
       //********************************************
 
-      //for the sun we are using this texture ...
+      //for the sun we are using this texture 
       let textureSun =new THREE.TextureLoader().load("textures/sun/sunmap.jpg");
       textureSun.wrapS =THREE.ReapeatWrapping ;
       textureSun.wrapT =THREE.ReapeatWrapping ;
@@ -91,15 +88,15 @@
 
       //EARTH SYTEM will contain EARTH,ATMOSPHERE,AXIS LINE
       // wich is a line that runs through the north ans south poles
-      //,MOON 
+      //and theMOON 
       let earthsys =new THREE.Group();
       const r=25; // radius of earth,r+1 is radius of atmosphere
       const s=50; //with segments , height segments sphere grometry
       const tilt = 0.41 // earth+atmosphere+axix s line tilt in radians 
 
-      // so for the earth we have tree texture images  :
+      // so for the earth we have three textures images  :
       // a bumpmap  where we are going to be able to show height
-      // acolor map which show colors and speculer map which 
+      // a color map which show colors and speculer map which 
       //show shininess or reflectivity and load them to three object here 
       const earthC =textureLoader.load("textures/earth/earthmap1k.jpg")
       const earthB =textureLoader.load("textures/earth/bumpmap.png")
@@ -121,9 +118,9 @@
 
       earthsys.add(earth);//add earth to earth system group 
 
-      //And now we will add earth atmosphere , it will be a sphere larger thatn the earth
-      //it going to be a semi-transparent  that going to show a cloud orbiting arrowd the earth 
-      //the earth texture that show the clolud look like this 
+      //And now we will add earth atmosphere , it will be a sphere larger that the earth
+      //it going to be a semi-transparent  that going to show a cloud orbiting around the earth 
+      //the earth texture that show the cloud look like this 
       //earth cloud 
       const geometryCloud =new THREE.SphereGeometry(r+1,s,s);
       const materialCloud =new THREE.MeshPhongMaterial({
@@ -155,7 +152,7 @@
         geometryAxis,
         materialAxis
       )
-      axis.rotation.z=tilt ; // rotatit as eearth and the atmosphere
+      axis.rotation.z=tilt ; // rotat it as the earth and the atmosphere
       earthsys.add(axis);//add axis to the earth sys
 
       //Now for the moon this is what the bump map looks like and the color map for the moon 
@@ -209,7 +206,7 @@
 
       const moonSpeed =80 ;
 
-      //the animate function does three things 
+      //the render function does three things 
       //move the earth around tha sun 
       //move the moon around the earth 
       //rotation the earth system around it's axis 
